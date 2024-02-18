@@ -3,14 +3,20 @@ import { IssueItem } from "./IssueItem";
 import { useState } from "react";
 
 export default function IssuesList({ labels, status }) {
-  const issueQuery = useQuery(["issues", { labels, status }], () => {
-    const statusString = status ? `&status=${status}` : "";
-    const labelString = labels.map((label) => `labels[]=${label}`).join("&");
-    // console.log(labelString);
-    return fetch(`/api/issues?${labelString}${statusString}`).then((res) =>
-      res.json()
-    );
-  });
+  const issueQuery = useQuery(
+    ["issues", { labels, status }],
+    () => {
+      const statusString = status ? `&status=${status}` : "";
+      const labelString = labels.map((label) => `labels[]=${label}`).join("&");
+      // console.log(labelString);
+      return fetch(`/api/issues?${labelString}${statusString}`).then((res) =>
+        res.json()
+      );
+    },
+    {
+      staleTime: 1000 * 60, //this is for make data be fresh until 1 minutes
+    }
+  );
 
   const [searchValue, setSearchValue] = useState("");
 
