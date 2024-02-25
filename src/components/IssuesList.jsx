@@ -1,6 +1,7 @@
 import { useQuery } from "react-query";
 import { IssueItem } from "./IssueItem";
 import { useState } from "react";
+import fetchWithError from "../helpers/fetchWithError";
 
 export default function IssuesList({ labels, status }) {
   const issueQuery = useQuery(
@@ -9,9 +10,7 @@ export default function IssuesList({ labels, status }) {
       const statusString = status ? `&status=${status}` : "";
       const labelString = labels.map((label) => `labels[]=${label}`).join("&");
       // console.log(labelString);
-      return fetch(`/api/issues?${labelString}${statusString}`).then((res) =>
-        res.json()
-      );
+      return fetchWithError(`/api/issues?${labelString}${statusString}`);
     },
     {
       staleTime: 1000 * 60, //this is for make data be fresh until 1 minutes
@@ -55,6 +54,8 @@ export default function IssuesList({ labels, status }) {
       <h2>Issues List</h2>
       {issueQuery.isLoading ? (
         <p>Loading...</p>
+      ) : issueQuery.isError ? (
+        <p>{issueQuery.error.message}</p>
       ) : searchQuery.fetchStatus === "idle" &&
         searchQuery.isLoading === true ? (
         <ul className="issues-list">
