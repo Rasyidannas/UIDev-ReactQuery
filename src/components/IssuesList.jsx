@@ -4,18 +4,12 @@ import { useState } from "react";
 import fetchWithError from "../helpers/fetchWithError";
 
 export default function IssuesList({ labels, status }) {
-  const issueQuery = useQuery(
-    ["issues", { labels, status }],
-    () => {
-      const statusString = status ? `&status=${status}` : "";
-      const labelString = labels.map((label) => `labels[]=${label}`).join("&");
-      // console.log(labelString);
-      return fetchWithError(`/api/issues?${labelString}${statusString}`);
-    },
-    {
-      staleTime: 1000 * 60, //this is for make data be fresh until 1 minutes
-    }
-  );
+  const issueQuery = useQuery(["issues", { labels, status }], () => {
+    const statusString = status ? `&status=${status}` : "";
+    const labelString = labels.map((label) => `labels[]=${label}`).join("&");
+    // console.log(labelString);
+    return fetchWithError(`/api/issues?${labelString}${statusString}`);
+  });
 
   const [searchValue, setSearchValue] = useState("");
 
