@@ -1,9 +1,10 @@
 import { useQuery } from "react-query";
 
 export function useLabelsData() {
+  // this signal for aborted or cancel when don't do query
   const labelsQuery = useQuery(
     ["labels"],
-    () => fetch("/api/labels").then((res) => res.json()),
+    ({ signal }) => fetch("/api/labels", { signal }).then((res) => res.json()),
     {
       staleTime: 1000 * 60 * 60, //this is for make data be fresh until 60 minutes
     }

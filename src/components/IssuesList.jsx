@@ -4,19 +4,24 @@ import { useState } from "react";
 import fetchWithError from "../helpers/fetchWithError";
 
 export default function IssuesList({ labels, status }) {
-  const issueQuery = useQuery(["issues", { labels, status }], () => {
+  // this signal for aborted or cancel when don't do query
+  const issueQuery = useQuery(["issues", { labels, status }], ({ signal }) => {
     const statusString = status ? `&status=${status}` : "";
     const labelString = labels.map((label) => `labels[]=${label}`).join("&");
     // console.log(labelString);
-    return fetchWithError(`/api/issues?${labelString}${statusString}`);
+    return fetchWithError(`/api/issues?${labelString}${statusString}`, {
+      signal,
+    });
   });
 
   const [searchValue, setSearchValue] = useState("");
 
   const searchQuery = useQuery(
     ["issues", "search", searchValue],
-    () =>
-      fetch(`/api/search/issues?q=${searchValue}`).then((res) => res.json()),
+    ({ signal }) =>
+      fetch(`/api/search/issues?q=${searchValue}`, { signal }).then((res) =>
+        res.json()
+      ),
     {
       enabled: searchValue.length > 0, //this will be disable when searchValue is empty
     }
