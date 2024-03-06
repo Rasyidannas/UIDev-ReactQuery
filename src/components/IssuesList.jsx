@@ -2,6 +2,7 @@ import { useQuery } from "react-query";
 import { IssueItem } from "./IssueItem";
 import { useState } from "react";
 import fetchWithError from "../helpers/fetchWithError";
+import Loader from "./Loader";
 
 export default function IssuesList({ labels, status }) {
   // this signal for aborted or cancel when don't do query
@@ -50,7 +51,9 @@ export default function IssuesList({ labels, status }) {
         />
       </form>
 
-      <h2>Issues List</h2>
+      <h2>
+        Issues List {issueQuery.fetchStatus === "fetching" ? <Loader /> : null}
+      </h2>
       {issueQuery.isLoading ? (
         <p>Loading...</p>
       ) : issueQuery.isError ? (
