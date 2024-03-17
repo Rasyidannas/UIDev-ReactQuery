@@ -1,19 +1,33 @@
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { IssueItem } from "./IssueItem";
 import { useState } from "react";
 import fetchWithError from "../helpers/fetchWithError";
 import Loader from "./Loader";
 
 export default function IssuesList({ labels, status }) {
+  const queryCLient = useQueryClient();
   // this signal for aborted or cancel when don't do query
-  const issueQuery = useQuery(["issues", { labels, status }], ({ signal }) => {
-    const statusString = status ? `&status=${status}` : "";
-    const labelString = labels.map((label) => `labels[]=${label}`).join("&");
-    // console.log(labelString);
-    return fetchWithError(`/api/issues?${labelString}${statusString}`, {
-      signal,
-    });
-  });
+  const issueQuery = useQuery(
+    ["issues", { labels, status }],
+    async ({ signal }) => {
+      const statusString = status ? `&status=${status}` : "";
+      const labelString = labels.map((label) => `labels[]=${label}`).join("&");
+      // console.log(labelString);
+      const result = await fetchWithError(
+        `/api/issues?${labelString}${statusString}`,
+        {
+          signal,
+        }
+      );
+
+      result.forEach((issue) => {
+        //this set query for signle issue and connect with issueDetails.jsx you can check in reactQuery tool
+        queryCLient.setQueryData(["issue", issue.number.toString()], issue);
+      });
+
+      return result;
+    }
+  );
 
   const [searchValue, setSearchValue] = useState("");
 
