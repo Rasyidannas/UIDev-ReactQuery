@@ -4,17 +4,19 @@ import { useState } from "react";
 import fetchWithError from "../helpers/fetchWithError";
 import Loader from "./Loader";
 
-export default function IssuesList({ labels, status }) {
+export default function IssuesList({ labels, status, pageNum, setPageNum }) {
   const queryCLient = useQueryClient();
   // this signal for aborted or cancel when don't do query
   const issueQuery = useQuery(
-    ["issues", { labels, status }],
+    ["issues", { labels, status, pageNum }],
     async ({ signal }) => {
       const statusString = status ? `&status=${status}` : "";
       const labelString = labels.map((label) => `labels[]=${label}`).join("&");
+      const paginationString = pageNum ? `&page=${pageNum}` : "";
+
       // console.log(labelString);
       const result = await fetchWithError(
-        `/api/issues?${labelString}${statusString}`,
+        `/api/issues?${labelString}${statusString}${paginationString}`,
         {
           signal,
         }
@@ -74,21 +76,46 @@ export default function IssuesList({ labels, status }) {
         <p>{issueQuery.error.message}</p>
       ) : searchQuery.fetchStatus === "idle" &&
         searchQuery.isLoading === true ? (
-        <ul className="issues-list">
-          {issueQuery.data.map((issue) => (
-            <IssueItem
-              key={issue.id}
-              title={issue.title}
-              number={issue.number}
-              assignee={issue.assignee}
-              commentCount={issue.comments.length}
-              createdBy={issue.createdBy}
-              createdDate={issue.createdDate}
-              labels={issue.labels}
-              status={issue.status}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className="issues-list">
+            {issueQuery.data.map((issue) => (
+              <IssueItem
+                key={issue.id}
+                title={issue.title}
+                number={issue.number}
+                assignee={issue.assignee}
+                commentCount={issue.comments.length}
+                createdBy={issue.createdBy}
+                createdDate={issue.createdDate}
+                labels={issue.labels}
+                status={issue.status}
+              />
+            ))}
+          </ul>
+          <div className="pagination">
+            <button
+              onClick={() => {
+                if (pageNum - 1 > 0) setPageNum(pageNum - 1);
+              }}
+              disabled={pageNum === 1}
+            >
+              Previous
+            </button>
+            <p>
+              Page {pageNum} {issueQuery.isFetching ? "..." : ""}
+            </p>
+            <button
+              onClick={() => {
+                if (issueQuery.data?.length !== 0) {
+                  setPageNum(pageNum + 1);
+                }
+              }}
+              disabled={issueQuery.data?.length === 0}
+            >
+              Next
+            </button>
+          </div>
+        </>
       ) : (
         <>
           <h2>Search Results</h2>
