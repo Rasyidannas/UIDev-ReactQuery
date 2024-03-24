@@ -1,11 +1,13 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "react-query";
+import { useInfiniteQuery, useQuery } from "react-query";
 import { IssueHeader } from "./IssueHeader";
 import { useUserData } from "../helpers/useUserData";
 import { relativeDate } from "../helpers/relativeDate";
 import IssueStatus from "./IssueStatus";
 import IssueAssignment from "./IssueAssignment";
 import IssueLabels from "./IssueLabels";
+import Loader from "./Loader";
+import useScrollToBottomAction from "../helpers/useScrollToBottomAction";
 
 function useIssueData(issueNumber) {
   return useQuery(["issues", issueNumber], ({ signal }) => {
@@ -16,11 +18,21 @@ function useIssueData(issueNumber) {
 }
 
 function useIssueComments(issueNumber) {
-  return useQuery(["issues", issueNumber, "comments"], ({ signal }) => {
-    return fetch(`/api/issues/${issueNumber}/comments`, { signal }).then(
-      (res) => res.json()
-    );
-  });
+  return useInfiniteQuery(
+    ["issues", issueNumber, "comments"],
+    ({ signal, pageParam = 1 }) => {
+      return fetch(`/api/issues/${issueNumber}/comments?page=${pageParam}`, {
+        signal,
+      }).then((res) => res.json());
+    },
+    {
+      getNextPageParam: (lastPage, pages) => {
+        if (lastPage.lenght === 0) return;
+
+        return pages.length + 1;
+      },
+    }
+  );
 }
 
 function Comment({ comment, createdBy, createdDate }) {
@@ -55,6 +67,9 @@ export default function IssueDetails() {
   const issueQuery = useIssueData(number);
   const commentsQuery = useIssueComments(number);
 
+  //this is for running next fetch (infiniteQuery)
+  useScrollToBottomAction(document, commentsQuery.fetchNextPage, 100);
+
   return (
     <div className="issue-details">
       {issueQuery.isLoading ? (
@@ -68,10 +83,13 @@ export default function IssueDetails() {
               {commentsQuery.isLoading ? (
                 <p>Loading...</p>
               ) : (
-                commentsQuery.data?.map((comment) => (
-                  <Comment key={comment.id} {...comment} />
-                ))
+                commentsQuery.data?.pages.map((commentPage) =>
+                  commentPage.map((comment) => (
+                    <Comment key={comment.id} {...comment} />
+                  ))
+                )
               )}
+              {commentsQuery.isFetchingNextPage && <Loader />}
             </section>
             <aside>
               <IssueStatus
