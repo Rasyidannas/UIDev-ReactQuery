@@ -1,9 +1,9 @@
-import { useQueryClient } from "react-query";
 import { Link } from "react-router-dom";
 import { GoIssueOpened, GoIssueClosed, GoComment } from "react-icons/go";
 import { relativeDate } from "../helpers/relativeDate";
 import { useUserData } from "../helpers/useUserData";
 import { Label } from "./Label";
+import { useQueryClient } from "react-query";
 import fetchWithError from "../helpers/fetchWithError";
 
 export function IssueItem({
@@ -18,20 +18,17 @@ export function IssueItem({
 }) {
   const assigneeUser = useUserData(assignee);
   const createdByUser = useUserData(createdBy);
-  const queryCLient = useQueryClient();
-
+  const queryClient = useQueryClient();
   return (
     <li
       //this using prefetch and hover for fetching data before cisiting page or only when hover
       onMouseEnter={() => {
-        queryCLient.prefetchQuery(["issues", number.toString()], () =>
+        queryClient.prefetchQuery(["issues", number.toString()], () =>
           fetchWithError(`/api/issues/${number}`)
         );
-        queryCLient.prefetchQuery(
+        queryClient.prefetchQuery(
           ["issues", number.toString(), "comments"],
-          () => {
-            fetchWithError(`/api/issues/${number}/comments`);
-          }
+          () => fetchWithError(`/api/issues/${number}/comments`)
         );
       }}
     >
@@ -50,7 +47,7 @@ export function IssueItem({
           ))}
         </span>
         <small>
-          #{number} opened {relativeDate(createdDate)}
+          #{number} opened {relativeDate(createdDate)}{" "}
           {createdByUser.isSuccess ? `by ${createdByUser.data.name}` : ""}
         </small>
       </div>
